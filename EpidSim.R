@@ -11,7 +11,7 @@
 
 rm(list = ls())
 
-install.packages("EpiModel")
+#install.packages("EpiModel")
 library("EpiModel")
 
 
@@ -181,7 +181,7 @@ progress <- function(dat, at) {   # also with an E compartment
 
 
 ## Parameters, initial conditions, and control settings
-param <- param.net(inf.prob = 0.5, act.rate = 2, ei.rate = 0.01, ir.rate = 0.01, rs.rate = )
+param <- param.net(inf.prob = 0.5, act.rate = 2, ei.rate = 0.01, ir.rate = 0.01, rs.rate = 0.01) #note that rs.rate was missing argument
 init <- init.net(i.num = 10, status.rand = FALSE)
 
 # Ignore the type = "SI" setting; this is a bug that will be fixed
