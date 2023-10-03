@@ -1,0 +1,124 @@
+library(pracma)
+library(EnvStats)
+
+#Set random seed for reproducibility
+set.seed(19031938)
+#########################
+#Define Fixed Parameters
+
+nindex = 10000
+
+# Mask efficacy
+maskfac_out = 0.0
+maskfac_in = 0.0
+
+# Minimum ach
+achlimit = 0.0
+
+# Minimum volflow per person in m3/s/per-person
+volflowpplimit = 0.0
+
+# Number of days
+ndays = 12
+daynumber = 1:ndays
+
+# Number of hourly events per day
+nhours = 1
+
+# Height of room (m)
+roomheight = 3.0
+
+# Decay rate constant (1/hr); use placeholder of 1/hour
+kdecay = 1.0
+
+###################################################################################
+
+# Integrate from 0.1 micron to 100 microns
+nbins = 30
+nleft = -1
+nright = 2
+dlogd = (nright-nleft)/nbins
+
+dfull = numeric(nbins)
+
+dedge = logspace(nleft, nright, nbins+1)
+
+for (i in 1:nbins) {
+  dfull[i] = (dedge[i+1]*dedge[i])^(0.5)
+}
+
+# Cappa 2 mode model for breathing - note cn here is particles/s
+# Note that cn here is from Cappa 3/10/2022 4:02 am email
+nmodesb  = 2
+
+cnb = c(1.33/(1.33+0.88), 0.88/(1.33+0.88))
+cmdb = c(0.45, 0.87)
+gsdb = c(1.58,1.47)
+
+# Cappa 3 mode model for talking - note cn here is particles/s
+# Note that cn here is from Cappa 2/27/2022 2:52 pm email
+nmodest  = 3
+cnt = c(4.3/(4.3+0.1+0.011), 0.1/(4.3+0.1+0.011), 0.011/(4.3+0.1+0.011))
+cmdt = c(0.45, 3.3, 10.5)
+gsdt = c(1.96,1.6, 1.6)
+
+# Set max diameter to 25 um dry ie 100 um wet
+# ibinmax = 24
+# Set max diameter to 5 um dry ie 20 um wet
+ibinmax = 17
+d = dfull[0:ibinmax]
+nemb <-  array(c(numeric(ibinmax),numeric(nmodesb)),dim = c(ibinmax, nmodesb))
+vemb <-  array(c(numeric(ibinmax),numeric(nmodesb)),dim = c(ibinmax, nmodesb))
+nemt <-  array(c(numeric(ibinmax),numeric(nmodest)),dim = c(ibinmax, nmodest))
+vemt <- array(c(numeric(ibinmax),numeric(nmodest)),dim = c(ibinmax, nmodest))
+
+
+
+# Calculate number (1/s) and volume (um3/s) in each size bin for breathing for 1 p/s
+for (im in 1:nmodesb) {
+  for (i in 1:ibinmax) {
+    nemb[i,im] = dlogd * log(10.0) * cnb[im]/((2.0*pi)^(0.5) * log(gsdb[im])) * exp(-((log(d[i]) - log(cmdb[im]))^2)/(2.0*(log(gsdb[im]))^2))
+    vemb[i,im] = nemb[i,im] * (pi * (d[i])^3)/6.0
+  }
+}
+
+# Calculate number (1/s) and volume (um3/s) in each size bin for talking for 1 p/s
+
+for (im in 1:nmodest){
+  for (i in 1:ibinmax) {
+  nemt[i,im] = dlogd * log(10.0) * cnt[im]/((2.0*pi)^(0.5) * log(gsdt[im])) * exp(-((log(d[i]) - log(cmdt[im]))^2)/(2.0*(log(gsdt[im]))^2))
+vemt[i,im] = nemt[i,im] * (pi * (d[i])^3)/6.0
+  }
+}
+
+# Total wet volume emission rate for each bin for breathing for p/s = 1.0 in mL/s
+# Scale by 64 for dry to wet volume
+# Multiply by 1e-12 to convert um3/s to mL/s
+vembreathe = 64.0 * 1.0e-12 * (vemb[,1]+vemb[,2])
+
+vemtalk = 64.0 * 1.0e-12 * (vemt[,1]+vemt[,2]+vemt[,3])
+
+# Specify distribution of p/s for breathing
+# From Cappa's 3/11 and 3/12 emails (also see my email to him on 3/17 at 2.40 pm) for breathing
+# Scale by factor of 8 (ie add ln(8) to mu) to account for APS sampling
+mub = log(8) - 0.48*log(10)
+sigmab = 0.85*log(10)/(2^(0.5))
+nemm_breathe <-  rlnorm(nindex, mub, sigmab)
+
+
+# Specify distribution of p/s for talking
+# From Asadi, fig 4B, draw samples of number of particles/s emitted for talking
+# Mean = 3.4 particles/s, Std = 2.7 particles/s
+# Scale by factor of 13 (ie multiply mean and std dev by 13) to account for APS sampling
+# Truncate log-normal at 260 particles/s (limit of 20 from Fig 5A in Asadi et al. scaled by factor of 13)
+
+mean = 3.4*13
+std = 2.7*13
+mu = log(mean*mean/(mean*mean + std*std)^(0.5))
+sigma = (log(1.0 + std*std/(mean*mean)))^0.5
+lmax = log(20.0*13)
+bclip = (lmax - mu)/sigma
+lclip = rnormTrunc(n = nindex, mean = mu, sd = std, min = -Inf, max = bclip)
+nemm_talk = exp(lclip)
+
+#lclip = truncnorm.rvs(-np.inf, bclip, loc=mu, scale=sigma, size=nindex,random_state=rng)
