@@ -105,7 +105,7 @@ vemtalk = 64.0 * 1.0e-12 * (vemt[,1]+vemt[,2]+vemt[,3])
 # Scale by factor of 8 (ie add ln(8) to mu) to account for APS sampling
 mub = log(8) - 0.48*log(10)
 sigmab = 0.85*log(10)/(2^(0.5))
-nemm_breathe <- rlnorm(n = nindex, meanlog = mub, sdlog = sigmab)
+nemm_breathe <- scan("data/data3.csv", sep=",")
 
 
 # Specify distribution of p/s for talking
@@ -150,3 +150,89 @@ vbreatheindex_median = median(vbreatheindex)
 vtalkindex_median = median(vtalkindex)
 vbreatheindex_mean = mean(vbreatheindex)
 vtalkindex_mean = mean(vtalkindex)
+
+vtalkindex_75 = quantile(vtalkindex, probs=.75)
+vtalkindex_90 = quantile(vtalkindex, probs=.90)
+
+vratio = vtalkindex/vbreatheindex
+
+############
+# BREATHING RATE
+
+# Breathing rate in m3/s
+# Uniform distribution from sitting to light activity from Table 3 Henriques et al. (2022)
+
+# Breathing rate in m3/s
+# Uniform distribution from sitting to light activity from Table 3 Henriques et al. (2022)
+
+vdotbreathe = array(c(numeric(nindex),numeric(ndays)),dim = c(nindex, ndays))
+
+lowbreathe = 0.51/3600.0
+highbreathe = 1.24/3600.0
+# lowbreathe = 1.0e-4
+# highbreathe = 2.0e-4
+
+br_activity = c(0.51/3600.0, 0.57/3600.0, 1.24/3600)
+activityindex = array(c(numeric(nindex), numeric(ndays)), dim = c(nindex, ndays))
+
+for (iday in 1:ndays) {
+  activityindex[,iday] = sample(3, size = nindex, replace = TRUE)
+
+  for (iindex in 1:nindex) {
+    vdotbreathe[iindex,iday]=br_activity[activityindex[iindex,iday]]
+  }
+}
+
+
+############
+# VIRAL LOAD AND INFECTIOUSNESS
+
+# Viral load NP (copies)
+
+vnose <- matrix(0, nrow = nindex, ncol = ndays)
+kevn <- read.csv("data/Ke_Log10VLs_10000.csv", sep=",", skip = 1)
+
+for (iday in 1:ndays) {
+  irow <- 10 * iday + 5
+  vnose[, iday] <- unlist((10^kevn[irow, 2:10001]) * 3)
+}
+
+
+vsalv = matrix(0, nrow = nindex, ncol = ndays)
+kevs = read.csv("data/Ke_Log10VLs_saliva_10000.csv", sep=",", skip = 1)
+for (iday in 1:ndays) {
+  irow <- 10 * iday + 5
+  vnose[, iday] <- unlist((10^kevs[irow, 2:10001]))
+}
+
+
+vinfectiousness = matrix(0, nrow = nindex, ncol = ndays)
+kevi = read.csv("data/Ke_Infectiousness_10000.csv", sep=",", skip = 1)
+for (iday in 1:ndays) {
+  irow <- 10 * iday + 5
+  vnose[, iday] <- unlist((3*kevi[irow, 2:10001]))
+}
+
+
+##############
+# ACH
+ach = matrix(0, nrow = nindex, ncol = ndays)
+achm = matrix(0, nrow = nindex, ncol = ndays)
+
+# From Persily et al. (2005)
+meanach = 2.00
+stdach = 2.45
+
+mu_ach = log(meanach*meanach/(meanach*meanach + stdach*stdach)^0.5)
+sigma_ach = (log(1.0 + stdach*stdach/(meanach*meanach)))^0.5
+
+for (iday in 1:ndays){ ###########  May need to replace this with saved data for replicability, or rely only on R seed
+  ach[,iday] = rlnorm(mu_ach,sigma_ach, n=nindex)
+  achm[, iday] = clamp(ach[, iday], achlimit, Inf)
+}
+
+
+
+
+
+
