@@ -232,7 +232,69 @@ for (iday in 1:ndays){ ###########  May need to replace this with saved data for
 }
 
 
+##############
+# DEPOSITION
+
+# Calculate diameter-dependent deposition velocity based on Lai and Nazaroff (2000)
+#
+
+# Air viscosity (kg/m-s); Henriques (2022)
+mu_air = 1.8e-5
+
+lamda_air = 0.0651
+
+# Particle density (kg/m3); Henriques (2022)
+dens_particle = 1000.0
+
+# Air density (kg/m3); Henriques (2022)
+dens_air = 1.2
+
+# Gravitational constant (m/s2)
+grav = 9.81
+#
+# Knudsen number
+Kn = 2.0 * lamda_air/d
+
+Cc = 1.0 + Kn * (1.257 + 0.4 * exp(-1.1/Kn))
+
+setvel_particle = ((d * 1.0e-6)**2) * (dens_particle - dens_air) * grav * Cc /(18.0 * mu_air)
+
+ustar = 0.01
+
+# Air kinematic viscosity (m2/s)
+kinem_air = mu_air/dens_air
+#
+# Boltzman constant (m2 kg/s2-K)
+boltz = 1.38e-23
+
+# temperature (K)
+temperature = 298.0
+
+# Particle diffusivity in air (m2/s); Equation 8.73, Seinfeld and Pandis (1998)
+diff_particle = boltz * temperature * Cc /(3 * pi * mu_air * d*1.0e-6)
+
+# Schmidt number
+Sc  = kinem_air/diff_particle
+
+# Calculate deposition velocity (m/s) for upward facing horizontal surface; Table 2, Lai and Nazaroff (2000)
+
+# rplus; Lai and Nazaroff (2000)
+rplus = d*1.0e-6/2.0 * ustar/kinem_air
+
+scpow = Sc^(-1.0/3.0)
+
+aconst = 0.5 * log(((10.92*scpow + 4.3)^3)/(1.0/Sc + 0.0609)) + (3)^0.5 * atan((8.6 - 10.92*scpow)/(3^0.5 * 10.92 * scpow))
+
+bconst = 0.5 * log(((10.92*scpow + rplus)^3)/(1.0/Sc + 7.669e-4*(rplus**3))) + 3^0.5 * atan((2.0*rplus - 10.92*scpow)/(3^0.5 * 10.92 * scpow))
+
+integ = 3.64 * (Sc**0.66667) * (aconst - bconst) + 39.0
+
+# Deposition velocity (m/s)
+dep = setvel_particle/(1.0 - exp(-setvel_particle*integ/ustar))
 
 
+# Deposition rate coefficient (1/hr)
+kdep = 3600.0*dep/roomheight
 
-
+##############
+# DIAMETER-DEPENDENT DEPOSITION FRACTION IN RESPIRATORY SYSTEM - from Henriques et al. (2022)
