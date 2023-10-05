@@ -445,10 +445,10 @@ for (iday in 1:ndays) {
 id50 = 1.0
 
 # ARRAYS FOR WELL-MIXED CASE
-rnaconc_1 = matrix(0, nrow = ibinmax, ncol = ndays)
-rnaconc_2 = matrix(0, nrow = ibinmax, ncol = ndays)
-rnaconc_3 = matrix(0, nrow = ibinmax, ncol = ndays)
-rnaconc_4 = matrix(0, nrow = ibinmax, ncol = ndays)
+rnaconc_1 = array(0, dim = c(ibinmax, nindex, ndays))
+rnaconc_2 = array(0, dim = c(ibinmax, nindex, ndays))
+rnaconc_3 = array(0, dim = c(ibinmax, nindex, ndays))
+rnaconc_4 = array(0, dim = c(ibinmax, nindex, ndays))
 dose_1 = matrix(0, nrow = nindex, ncol = ndays)
 dose_2 = matrix(0, nrow = nindex, ncol = ndays)
 dose_3 = matrix(0, nrow = nindex, ncol = ndays)
@@ -471,10 +471,10 @@ Hrtrue = matrix(0, nrow = nindex, ncol = ndays)
 vbreathetrue = matrix(0, nrow = nindex, ncol = ndays)
 vtalktrue = matrix(0, nrow = nindex, ncol = ndays)
 
-rnaconcm_1 = matrix(0, nrow = ibinmax, ncol = ndays)
-rnaconcm_2 = matrix(0, nrow = ibinmax, ncol = ndays)
-rnaconcm_3 = matrix(0, nrow = ibinmax, ncol = ndays)
-rnaconcm_4 = matrix(0, nrow = ibinmax, ncol = ndays)
+rnaconcm_1 = array(0, dim = c(ibinmax, nindex, ndays))
+rnaconcm_2 = array(0, dim = c(ibinmax, nindex, ndays))
+rnaconcm_3 = array(0, dim = c(ibinmax, nindex, ndays))
+rnaconcm_4 = array(0, dim = c(ibinmax, nindex, ndays))
 dosem_1 = matrix(0, nrow = nindex, ncol = ndays)
 dosem_2 = matrix(0, nrow = nindex, ncol = ndays)
 dosem_3 = matrix(0, nrow = nindex, ncol = ndays)
@@ -768,4 +768,73 @@ cat('R*: ', sum(ninf_3) / nindex, '\n')
 cat('Number of new infections - WELL-MIXED; h=0.5-0.75 NOSE: ', sum(ninf_4), '\n')
 cat('R*: ', sum(ninf_4) / nindex, '\n')
 cat('\n')
+
+cat(paste("Number of new infections - NF", xdil_1, "; h=1.0 SALIVA: ", sum(xninf_1), "\n", sep = ""))
+cat("R*: ", sum(xninf_1) / nindex, "\n")
+cat(paste("Number of new infections - NF", xdil_2, "; h=1.0 NOSE: ", sum(xninf_2), "\n", sep = ""))
+cat("R*: ", sum(xninf_2) / nindex, "\n")
+cat(paste("Number of new infections - NF", xdil_3, "; h=0.5-0.75 SALIVA: ", sum(xninf_3), "\n", sep = ""))
+cat("R*: ", sum(xninf_3) / nindex, "\n")
+cat(paste("Number of new infections - NF", xdil_4, "; h=0.5-0.75 NOSE: ", sum(xninf_4), "\n", sep = ""))
+cat("R*: ", sum(xninf_4) / nindex, "\n")
+cat("\n")
+
+cat("Number of new infections - SPATIAL VARIABILITY CASE; h=1.0 SALIVA: ", sum(ninf_1x), "\n")
+cat("R*: ", sum(ninf_1x) / nindex, "\n")
+cat("Number of new infections - SPATIAL VARIABILITY CASE; h=1.0 NOSE: ", sum(ninf_2x), "\n")
+cat("R*: ", sum(ninf_2x) / nindex, "\n")
+cat("Number of new infections - SPATIAL VARIABILITY CASE; h=0.5-0.75 SALIVA: ", sum(ninf_3x), "\n")
+cat("R*: ", sum(ninf_3x) / nindex, "\n")
+cat("Number of new infections - SPATIAL VARIABILITY CASE; h=0.5-0.75 NOSE: ", sum(ninf_4x), "\n")
+cat("R*: ", sum(ninf_4x) / nindex, "\n")
+cat("\n")
+
+cat("MITIGATION Number of new infections - WELL-MIXED; h=1.0 SALIVA: ", sum(ninfm_1), "\n")
+cat("R*: ", sum(ninfm_1) / nindex, "\n")
+cat("MITIGATION Number of new infections - WELL-MIXED; h=1.0 NOSE: ", sum(ninfm_2), "\n")
+cat("R*: ", sum(ninfm_2) / nindex, "\n")
+cat("MITIGATION Number of new infections - WELL-MIXED; h=0.5-0.75 SALIVA: ", sum(ninfm_3), "\n")
+cat("R*: ", sum(ninfm_3) / nindex, "\n")
+cat("MITIGATION Number of new infections - WELL-MIXED; h=0.5-0.75 NOSE: ", sum(ninfm_4), "\n")
+cat("R*: ", sum(ninfm_4) / nindex, "\n")
+cat("\n")
+
+cat(paste("MITIGATION Number of new infections - NF", xdil_1, "; h=1.0 SALIVA: ", sum(xninfm_1), "\n", sep = ""))
+cat("MITIGATION R*: ", sum(xninfm_1) / nindex, "\n")
+cat(paste("MITIGATION Number of new infections - NF", xdil_2, "; h=1.0 NOSE: ", sum(xninfm_2), "\n", sep = ""))
+cat("MITIGATION R*: ", sum(xninfm_2) / nindex, "\n")
+cat(paste("MITIGATION Number of new infections - NF", xdil_3, "; h=0.5-0.75 SALIVA: ", sum(xninfm_3), "\n", sep = ""))
+cat("MITIGATION R*: ", sum(xninfm_3) / nindex, "\n")
+cat(paste("MITIGATION Number of new infections - NF", xdil_4, "; h=0.5-0.75 NOSE: ", sum(xninfm_4), "\n", sep = ""))
+cat("MITIGATION R*: ", sum(xninfm_4) / nindex, "\n")
+cat("\n")
+
+cat("MITIGATION Number of new infections - SPATIAL VARIABILITY CASE; h=1.0 SALIVA: ", sum(ninfm_1x), "\n")
+cat("MITIGATION R*: ", sum(ninfm_1x) / nindex, "\n")
+cat("MITIGATION Number of new infections - SPATIAL VARIABILITY CASE; h=1.0 NOSE: ", sum(ninfm_2x), "\n")
+cat("MITIGATION R*: ", sum(ninfm_2x) / nindex, "\n")
+cat("MITIGATION Number of new infections - SPATIAL VARIABILITY CASE; h=0.5-0.75 SALIVA: ", sum(ninfm_3x), "\n")
+cat("MITIGATION R*: ", sum(ninfm_3x) / nindex, "\n")
+cat("MITIGATION Number of new infections - SPATIAL VARIABILITY CASE; h=0.5-0.75 NOSE: ", sum(ninfm_4x), "\n")
+cat("MITIGATION R*: ", sum(ninfm_4x) / nindex, "\n")
+cat("\n")
+
+ninfindex_1 = rowSums(ninf_1)
+ninfindex_2 = rowSums(ninf_2)
+ninfindex_3 = rowSums(ninf_3)
+ninfindex_4 = rowSums(ninf_4)
+xninfindex_1 = rowSums(xninf_1)
+xninfindex_2 = rowSums(xninf_2)
+xninfindex_3 = rowSums(xninf_3)
+xninfindex_4 = rowSums(xninf_4)
+
+nzeros_1 = ninfindex_1[ninfindex_1 == 0]
+nzeros_2 = ninfindex_2[ninfindex_2 == 0]
+nzeros_3 = ninfindex_3[ninfindex_3 == 0]
+nzeros_4 = ninfindex_4[ninfindex_4 == 0]
+xnzeros_1 = ninfindex_1[xninfindex_1 == 0]
+xnzeros_2 = ninfindex_2[xninfindex_2 == 0]
+xnzeros_3 = ninfindex_3[xninfindex_3 == 0]
+xnzeros_4 = ninfindex_3[xninfindex_4 == 0]
+
 
