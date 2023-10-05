@@ -333,7 +333,8 @@ nsus = matrix(0, nrow = nindex, ncol = ndays)
 for (iday in 1:ndays) {
   nsus[, iday] <- round(rgamma(n = nindex, shape = 20.0/30.0, scale = 30))
 }
-nsus <- as.integer(nsus)
+nsus = apply(nsus, MARGIN = c(1,2), FUN = as.integer)
+# changed (AB) - previously converted entire matrix into some int list?
 
 
 ###############
@@ -377,5 +378,294 @@ roomvol = roomheight*roomarea
 
 ###############
 # CALCULATE VOLUME FLOW RATE (m3/s)
+
+volflow = roomvol * ach / 3600.0
+volflowmin = 1e-3 * (5.0 * (1 + nsus) + 1.0 * roomarea)
+volflownew = pmax(volflow, volflowmin) # clamp gave error for me (AB)
+achm = volflownew * 3600.0 / roomvol
+volflowpp = volflow / (1 + nsus)
+volflowppm = volflownew / (1 + nsus)
+
+###############
+# MAIN CALCULATIONS
+# const_1, xconst_1, const_2, xconst_2, const_3, xconst_3 chosen by trial and error to get R0 = 3
+# const_1, xconst_1 still to be adjusted
+
+# Linear - SALIVA  - ONLY FAR FIELD INTERACTIONS
+hpower_1 = 1.0
+const_1 = 0.4498
+# Linear - SALIVA  - NEAR+FAR FIELD INTERACTIONS
+xconst_1 = 0.216
+xdil_1 = 24
+
+# Linear - NOSE - ONLY FAR FIELD INTERACTIONS
+hpower_2 = hpower_1
+const_2 = 2.049
+# Linear - NOSE - NEAR+FAR FIELD INTERACTIONS
+xconst_2 = 0.9677
+xdil_2 = 24
+
+# Power law - SALIVA - ONLY FAR FIELD INTERACTIONS
+hpower_3 = runif(nindex, min = 0.5, max = 0.75)
+const_3 = 271.90
+# Power law - SALIVA - NEAR+FAR FIELD INTERACTIONS
+xconst_3 = 128.28
+xdil_3 = 24
+
+# CAUTION - const_4 and xconst_4 have not yet been adjusted to get R0 = 3
+# Power law 0.6 - NOSE - ONLY FAR FIELD INTERACTIONS
+hpower_4 = hpower_3
+const_4 = 2.673e3
+# Power law 0.6 - NOSE - NEAR+FAR FIELD INTERACTIONS
+xconst_4 = 1.3355e3
+xdil_4 = 24
+
+# Infection virions per mL of aerosol volume
+# Note vsalv is per ml of saliva, vnose is per mL of VMT, vinfectioiusness is per swab
+vinf_1 = const_1 * (vsalv ** hpower_1)
+vinf_2 = const_2 * (vnose ** hpower_2)
+vinf_3 = matrix(0, nrow = nindex, ncol = ndays)
+vinf_4 = matrix(0, nrow = nindex, ncol = ndays)
+for (iday in 1:ndays) {
+  vinf_3[, iday] <- const_3 * (vsalv[, iday] ^ hpower_3)
+  vinf_4[, iday] <- const_4 * (vnose[, iday] ^ hpower_4)
+}
+
+xvinf_1 = xconst_1 * (vsalv ^ hpower_1)
+xvinf_2 = xconst_2 * (vnose ^ hpower_2)
+xvinf_3 = matrix(0, nrow = nindex, ncol = ndays)
+xvinf_4 = matrix(0, nrow = nindex, ncol = ndays)
+for (iday in 1:ndays) {
+  xvinf_3[, iday] <- xconst_3 * (vsalv[, iday] ^ hpower_3)
+  xvinf_4[, iday] <- xconst_4 * (vnose[, iday] ^ hpower_4)
+}
+
+# ID50 in virions
+# SET TO 1 to INCLUDE IN SCALING CONSTANT
+id50 = 1.0
+
+# ARRAYS FOR WELL-MIXED CASE
+rnaconc_1 = matrix(0, nrow = ibinmax, ncol = ndays)
+rnaconc_2 = matrix(0, nrow = ibinmax, ncol = ndays)
+rnaconc_3 = matrix(0, nrow = ibinmax, ncol = ndays)
+rnaconc_4 = matrix(0, nrow = ibinmax, ncol = ndays)
+dose_1 = matrix(0, nrow = nindex, ncol = ndays)
+dose_2 = matrix(0, nrow = nindex, ncol = ndays)
+dose_3 = matrix(0, nrow = nindex, ncol = ndays)
+dose_4 = matrix(0, nrow = nindex, ncol = ndays)
+pinf_1 = matrix(0, nrow = nindex, ncol = ndays)
+pinf_2 = matrix(0, nrow = nindex, ncol = ndays)
+pinf_3 = matrix(0, nrow = nindex, ncol = ndays)
+pinf_4 = matrix(0, nrow = nindex, ncol = ndays)
+ninf_1 = matrix(0, nrow = nindex, ncol = ndays)
+ninf_2 = matrix(0, nrow = nindex, ncol = ndays)
+ninf_3 = matrix(0, nrow = nindex, ncol = ndays)
+ninf_4 = matrix(0, nrow = nindex, ncol = ndays)
+ninf_1x = matrix(0, nrow = nindex, ncol = ndays)
+ninf_2x = matrix(0, nrow = nindex, ncol = ndays)
+ninf_3x = matrix(0, nrow = nindex, ncol = ndays)
+ninf_4x = matrix(0, nrow = nindex, ncol = ndays)
+Hr = matrix(0, nrow = nindex, ncol = ndays)
+HrV = matrix(0, nrow = nindex, ncol = ndays)
+Hrtrue = matrix(0, nrow = nindex, ncol = ndays)
+vbreathetrue = matrix(0, nrow = nindex, ncol = ndays)
+vtalktrue = matrix(0, nrow = nindex, ncol = ndays)
+
+rnaconcm_1 = matrix(0, nrow = ibinmax, ncol = ndays)
+rnaconcm_2 = matrix(0, nrow = ibinmax, ncol = ndays)
+rnaconcm_3 = matrix(0, nrow = ibinmax, ncol = ndays)
+rnaconcm_4 = matrix(0, nrow = ibinmax, ncol = ndays)
+dosem_1 = matrix(0, nrow = nindex, ncol = ndays)
+dosem_2 = matrix(0, nrow = nindex, ncol = ndays)
+dosem_3 = matrix(0, nrow = nindex, ncol = ndays)
+dosem_4 = matrix(0, nrow = nindex, ncol = ndays)
+pinfm_1 = matrix(0, nrow = nindex, ncol = ndays)
+pinfm_2 = matrix(0, nrow = nindex, ncol = ndays)
+pinfm_3 = matrix(0, nrow = nindex, ncol = ndays)
+pinfm_4 = matrix(0, nrow = nindex, ncol = ndays)
+ninfm_1 = matrix(0, nrow = nindex, ncol = ndays)
+ninfm_2 = matrix(0, nrow = nindex, ncol = ndays)
+ninfm_3 = matrix(0, nrow = nindex, ncol = ndays)
+ninfm_4 = matrix(0, nrow = nindex, ncol = ndays)
+ninfm_1x = matrix(0, nrow = nindex, ncol = ndays)
+ninfm_2x = matrix(0, nrow = nindex, ncol = ndays)
+ninfm_3x = matrix(0, nrow = nindex, ncol = ndays)
+ninfm_4x = matrix(0, nrow = nindex, ncol = ndays)
+
+# ARRAYS FOR NEAR+FAR CASE
+
+nsus_near = matrix(0, nrow = nindex, ncol = ndays)
+fnear = matrix(0, nrow = nindex, ncol = ndays)
+tnear = matrix(0, nrow = nindex, ncol = ndays)
+
+xrnaconc_far_1 = array(0, dim = c(ibinmax, nindex, ndays))
+xrnaconc_far_2 = array(0, dim = c(ibinmax, nindex, ndays))
+xrnaconc_far_3 = array(0, dim = c(ibinmax, nindex, ndays))
+xrnaconc_far_4 = array(0, dim = c(ibinmax, nindex, ndays))
+xrnaconc_near_1 = array(0, dim = c(ibinmax, nindex, ndays))
+xrnaconc_near_2 = array(0, dim = c(ibinmax, nindex, ndays))
+xrnaconc_near_3 = array(0, dim = c(ibinmax, nindex, ndays))
+xrnaconc_near_4 = array(0, dim = c(ibinmax, nindex, ndays))
+xdose_far_1 = matrix(0, nrow = nindex, ncol = ndays)
+xdose_far_2 = matrix(0, nrow = nindex, ncol = ndays)
+xdose_far_3 = matrix(0, nrow = nindex, ncol = ndays)
+xdose_far_4 = matrix(0, nrow = nindex, ncol = ndays)
+xdose_nearfar_1 = matrix(0, nrow = nindex, ncol = ndays)
+xdose_nearfar_2 = matrix(0, nrow = nindex, ncol = ndays)
+xdose_nearfar_3 = matrix(0, nrow = nindex, ncol = ndays)
+xdose_nearfar_4 = matrix(0, nrow = nindex, ncol = ndays)
+xpinf_far_1 = matrix(0, nrow = nindex, ncol = ndays)
+xpinf_far_2 = matrix(0, nrow = nindex, ncol = ndays)
+xpinf_far_3 = matrix(0, nrow = nindex, ncol = ndays)
+xpinf_far_4 = matrix(0, nrow = nindex, ncol = ndays)
+xpinf_nearfar_1 = matrix(0, nrow = nindex, ncol = ndays)
+xpinf_nearfar_2 = matrix(0, nrow = nindex, ncol = ndays)
+xpinf_nearfar_3 = matrix(0, nrow = nindex, ncol = ndays)
+xpinf_nearfar_4 = matrix(0, nrow = nindex, ncol = ndays)
+xpinf_1 = matrix(0, nrow = nindex, ncol = ndays)
+xpinf_2 = matrix(0, nrow = nindex, ncol = ndays)
+xpinf_3 = matrix(0, nrow = nindex, ncol = ndays)
+xpinf_4 = matrix(0, nrow = nindex, ncol = ndays)
+xninf_1 = matrix(0, nrow = nindex, ncol = ndays)
+xninf_2 = matrix(0, nrow = nindex, ncol = ndays)
+xninf_3 = matrix(0, nrow = nindex, ncol = ndays)
+xninf_4 = matrix(0, nrow = nindex, ncol = ndays)
+
+xrnaconcm_far_1 = array(0, dim = c(ibinmax, nindex, ndays))
+xrnaconcm_far_2 = array(0, dim = c(ibinmax, nindex, ndays))
+xrnaconcm_far_3 = array(0, dim = c(ibinmax, nindex, ndays))
+xrnaconcm_far_4 = array(0, dim = c(ibinmax, nindex, ndays))
+xrnaconcm_near_1 = array(0, dim = c(ibinmax, nindex, ndays))
+xrnaconcm_near_2 = array(0, dim = c(ibinmax, nindex, ndays))
+xrnaconcm_near_3 = array(0, dim = c(ibinmax, nindex, ndays))
+xrnaconcm_near_4 = array(0, dim = c(ibinmax, nindex, ndays))
+xdosem_far_1 = matrix(0, nrow = nindex, ncol = ndays)
+xdosem_far_2 = matrix(0, nrow = nindex, ncol = ndays)
+xdosem_far_3 = matrix(0, nrow = nindex, ncol = ndays)
+xdosem_far_4 = matrix(0, nrow = nindex, ncol = ndays)
+xdosem_nearfar_1 = matrix(0, nrow = nindex, ncol = ndays)
+xdosem_nearfar_2 = matrix(0, nrow = nindex, ncol = ndays)
+xdosem_nearfar_3 = matrix(0, nrow = nindex, ncol = ndays)
+xdosem_nearfar_4 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_far_1 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_far_2 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_far_3 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_far_4 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_nearfar_1 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_nearfar_2 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_nearfar_3 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_nearfar_4 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_far_1 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_far_2 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_far_3 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_far_4 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_nearfar_1 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_nearfar_2 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_nearfar_3 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_nearfar_4 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_1 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_2 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_3 = matrix(0, nrow = nindex, ncol = ndays)
+xpinfm_4 = matrix(0, nrow = nindex, ncol = ndays)
+xninfm_1 = matrix(0, nrow = nindex, ncol = ndays)
+xninfm_2 = matrix(0, nrow = nindex, ncol = ndays)
+xninfm_3 = matrix(0, nrow = nindex, ncol = ndays)
+xninfm_4 = matrix(0, nrow = nindex, ncol = ndays)
+
+Hrm = matrix(0, nrow = nindex, ncol = ndays)
+
+vaerosoltot = matrix(0, nrow = nindex, ncol = ndays)
+vaerosoltottalk = matrix(0, nrow = nindex, ncol = ndays)
+vaerosoltotbreathe = matrix(0, nrow = nindex, ncol = ndays)
+
+tan_mu = 0.0
+tan_std = 0.9
+tan_xbar = exp(tan_mu + tan_std^2 / 2)
+tan_xstd = sqrt((exp(tan_std^2) - 1) * exp(2 * tan_mu + tan_std^2))
+tan_eq10 = -1.01 + 0.11 * ach / 1.0 + 0.33 * sqrt(roomarea) / roomheight + 0.01 * roomheight / 1.0
+
+# fraction of people who spend some time in the near field
+for (iday in 1:ndays) {
+  fnear[, iday] <- runif(nindex, min = 0.0, max = 0.2)
+}
+
+# number of people who spend some time in the near field
+nsus_near = round(fnear * nsus)
+nsus_near = apply(nsus_near, MARGIN = c(1,2), FUN = as.integer)
+
+fnear = matrix(0.0, nrow = nindex, ncol = ndays)
+for (iday in 1:ndays) {
+  for (kind in 1:nindex) {
+    if (nsus[kind, iday] > 0) {
+      fnear[kind, iday] <- nsus_near[kind, iday] / nsus[kind, iday]
+    }
+  }
+}
+
+for (iday in 1:ndays) {
+  for (kind in 1:nindex) {
+    if (nsus[kind, iday] > 0) {
+      tnear[kind, iday] <- tend[kind, iday] / nsus_near[kind, iday]
+    }
+  }
+}
+
+for (iday in 1:ndays) {
+  for (ibin in 1:ibinmax) {
+    # Aerosol volume emission rate in each bin (mL/s)
+    # nemm_talk and nemm_breathe are for lowbreathe  - scale by actual breathing
+    vaerosol <- talkfraction[, iday] * (nemm_talk * vdotbreathe[, iday] / lowbreathe) * vemtalk[ibin] + (1.0 - talkfraction[, iday]) * (nemm_breathe * vdotbreathe[, iday] / lowbreathe) * vembreathe[ibin]
+    vaerosoltalk <- nemm_talk * vdotbreathe[, iday] / lowbreathe * vemtalk[ibin]
+    vaerosolbreathe <- nemm_breathe * vdotbreathe[, iday] / lowbreathe * vembreathe[ibin]
+
+    # Total aerosol volume emission rate summed over all bins (mL/s)
+    vaerosoltot[, iday] <- vaerosoltot[, iday] + vaerosol
+    vaerosoltottalk[, iday] <- vaerosoltottalk[, iday] + vaerosoltalk
+    vaerosoltotbreathe[, iday] <- vaerosoltotbreathe[, iday] + vaerosolbreathe
+
+    # Loss coefficient (1/s)
+    kloss = (kdecay + kdep[ibin] + ach[, iday]) / 3600.0
+    klossm = (kdecay + kdep[ibin] + achm[, iday]) / 3600.0
+
+    # CONCENTRATION IN WELL-MIXED CASE
+    rnaconc_1[ibin, , iday] <- ((1.0 - maskfac_out) * vinf_1[, iday] * vaerosol) / (kloss * roomvol[, iday]) * (1.0 - (1 - exp(-kloss * tend[, iday])) / (kloss * tend[, iday]))
+    rnaconc_2[ibin, , iday] <- ((1.0 - maskfac_out) * vinf_2[, iday] * vaerosol) / (kloss * roomvol[, iday]) * (1.0 - (1 - exp(-kloss * tend[, iday])) / (kloss * tend[, iday]))
+    rnaconc_3[ibin, , iday] <- ((1.0 - maskfac_out) * vinf_3[, iday] * vaerosol) / (kloss * roomvol[, iday]) * (1.0 - (1 - exp(-kloss * tend[, iday])) / (kloss * tend[, iday]))
+    rnaconc_4[ibin, , iday] <- ((1.0 - maskfac_out) * vinf_4[, iday] * vaerosol) / (kloss * roomvol[, iday]) * (1.0 - (1 - exp(-kloss * tend[, iday])) / (kloss * tend[, iday]))
+    rnaconcm_1[ibin, , iday] <- ((1.0 - maskfac_out) * vinf_1[, iday] * vaerosol) / (klossm * roomvol[, iday]) * (1.0 - (1 - exp(-klossm * tend[, iday])) / (klossm * tend[, iday]))
+    rnaconcm_2[ibin, , iday] <- ((1.0 - maskfac_out) * vinf_2[, iday] * vaerosol) / (klossm * roomvol[, iday]) * (1.0 - (1 - exp(-klossm * tend[, iday])) / (klossm * tend[, iday]))
+    rnaconcm_3[ibin, , iday] <- ((1.0 - maskfac_out) * vinf_3[, iday] * vaerosol) / (klossm * roomvol[, iday]) * (1.0 - (1 - exp(-klossm * tend[, iday])) / (klossm * tend[, iday]))
+    rnaconcm_4[ibin, , iday] <- ((1.0 - maskfac_out) * vinf_4[, iday] * vaerosol) / (klossm * roomvol[, iday]) * (1.0 - (1 - exp(-klossm * tend[, iday])) / (klossm * tend[, iday]))
+
+    # FAR-FIELD CONCENTRATION IN NEAR+FAR CASE
+    xrnaconc_far_1[ibin, , iday] <- ((1.0 - maskfac_out) * xvinf_1[, iday] * vaerosol) / (kloss * roomvol[, iday]) * (1.0 - (1 - exp(-kloss * tend[, iday])) / (kloss * tend[, iday]))
+    xrnaconc_far_2[ibin, , iday] <- ((1.0 - maskfac_out) * xvinf_2[, iday] * vaerosol) / (kloss * roomvol[, iday]) * (1.0 - (1 - exp(-kloss * tend[, iday])) / (kloss * tend[, iday]))
+    xrnaconc_far_3[ibin, , iday] <- ((1.0 - maskfac_out) * xvinf_3[, iday] * vaerosol) / (kloss * roomvol[, iday]) * (1.0 - (1 - exp(-kloss * tend[, iday])) / (kloss * tend[, iday]))
+    xrnaconc_far_4[ibin, , iday] <- ((1.0 - maskfac_out) * xvinf_4[, iday] * vaerosol) / (kloss * roomvol[, iday]) * (1.0 - (1 - exp(-kloss * tend[, iday])) / (kloss * tend[, iday]))
+    xrnaconcm_far_1[ibin, , iday] <- ((1.0 - maskfac_out) * xvinf_1[, iday] * vaerosol) / (klossm * roomvol[, iday]) * (1.0 - (1 - exp(-klossm * tend[, iday])) / (klossm * tend[, iday]))
+    xrnaconcm_far_2[ibin, , iday] <- ((1.0 - maskfac_out) * xvinf_2[, iday] * vaerosol) / (klossm * roomvol[, iday]) * (1.0 - (1 - exp(-klossm * tend[, iday])) / (klossm * tend[, iday]))
+    xrnaconcm_far_3[ibin, , iday] <- ((1.0 - maskfac_out) * xvinf_3[, iday] * vaerosol) / (klossm * roomvol[, iday]) * (1.0 - (1 - exp(-klossm * tend[, iday])) / (klossm * tend[, iday]))
+    xrnaconcm_far_4[ibin, , iday] <- ((1.0 - maskfac_out) * xvinf_4[, iday] * vaerosol) / (klossm * roomvol[, iday]) * (1.0 - (1 - exp(-klossm * tend[, iday])) / (klossm * tend[, iday]))
+
+    # NEAR-FIELD CONCENTRATION IN NEAR+FAR CASE
+    xrnaconc_near_1[ibin, , iday] <- (xdil_1 - 1) / xdil_1 * xrnaconc_far_1[ibin, , iday] + 1.0 / xdil_1 * (1 - maskfac_out) * xvinf_1[, iday] * vaerosol / vdotbreathe[, iday]
+    xrnaconc_near_2[ibin, , iday] <- (xdil_2 - 1) / xdil_2 * xrnaconc_far_2[ibin, , iday] + 1.0 / xdil_2 * (1 - maskfac_out) * xvinf_2[, iday] * vaerosol / vdotbreathe[, iday]
+    xrnaconc_near_3[ibin, , iday] <- (xdil_3 - 1) / xdil_3 * xrnaconc_far_3[ibin, , iday] + 1.0 / xdil_3 * (1 - maskfac_out) * xvinf_3[, iday] * vaerosol / vdotbreathe[, iday]
+    xrnaconc_near_4[ibin, , iday] <- (xdil_4 - 1) / xdil_4 * xrnaconc_far_4[ibin, , iday] + 1.0 / xdil_4 * (1 - maskfac_out) * xvinf_4[, iday] * vaerosol / vdotbreathe[, iday]
+    xrnaconcm_near_1[ibin, , iday] <- (xdil_1 - 1) / xdil_1 * xrnaconcm_far_1[ibin, , iday] + 1.0 / xdil_1 * (1 - maskfac_out) * xvinf_1[, iday] * vaerosol / vdotbreathe[, iday]
+    xrnaconcm_near_2[ibin, , iday] <- (xdil_2 - 1) / xdil_2 * xrnaconcm_far_2[ibin, , iday] + 1.0 / xdil_2 * (1 - maskfac_out) * xvinf_2[, iday] * vaerosol / vdotbreathe[, iday]
+    xrnaconcm_near_3[ibin, , iday] <- (xdil_3 - 1) / xdil_3 * xrnaconcm_far_3[ibin, , iday] + 1.0 / xdil_3 * (1 - maskfac_out) * xvinf_3[, iday] * vaerosol / vdotbreathe[, iday]
+    xrnaconcm_near_4[ibin, , iday] <- (xdil_4 - 1) / xdil_4 * xrnaconcm_far_4[ibin, , iday] + 1.0 / xdil_4 * (1 - maskfac_out) * xvinf_4[, iday] * vaerosol / vdotbreathe[, iday]
+  }
+
+  # CALCULATE DOSE FOR WELL MIXED CASE (virions/m3)
+
+  for (ibin in 1:ibinmax) {
+
+  }
+}
+
+
+
 
 
