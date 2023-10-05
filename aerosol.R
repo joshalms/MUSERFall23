@@ -2,9 +2,11 @@ library(pracma)
 library(EnvStats)
 library(raster)
 library(truncnorm)
+library(msm)
 
 #Set random seed for reproducibility
 set.seed(19031938)
+float_epsilon <- 2.220446049250313e-16
 #########################
 #Define Fixed Parameters
 
@@ -298,3 +300,80 @@ kdep = 3600.0*dep/roomheight
 
 ##############
 # DIAMETER-DEPENDENT DEPOSITION FRACTION IN RESPIRATORY SYSTEM - from Henriques et al. (2022)
+
+ifrac = 1.0 - 0.5*(1.0 - 1.0/(1.0 + 0.00076*(d^2.8)))
+fdep = ifrac * (0.0587 + 0.911/(1.0 + exp(4.77 + 1.485*log(d))) + 0.943/(1.0 + exp(0.508 - 2.58*log(d))))
+
+##############
+
+# AREA PER-PERSON (m**2/person)
+
+areapp = matrix(0, nrow = nindex, ncol = ndays)
+densx = matrix(0, nrow = nindex, ncol = ndays)
+
+# ASHRAE default densities
+
+# Generate random values for areapp
+for (iday in 1:ndays) {
+  areapp[, iday] <- runif(nindex, min = 1.0, max = 10.0)
+}
+
+# Calculate densx values
+for (iday in 1:ndays) { #May again need to replace this with loaded data
+  densx[, iday] <- 100.0 / areapp[, iday]
+}
+
+
+######
+# NUMBER OF SUSCEPTIBLE CONTACTS
+
+nsus = matrix(0, nrow = nindex, ncol = ndays)
+for (iday in 1:ndays) {
+  nsus[, iday] <- round(rgamma(n = nindex, shape = 20.0/30.0, scale = 30))
+}
+nsus <- as.integer(nsus)
+
+
+###############
+# EVENT DURATION (s)
+
+tend = matrix(0, nrow = nindex, ncol = ndays)
+
+
+mu_tend = log(1.0)
+
+
+sigma_tend=0.5
+lntend_min = log(0.1)
+lntend_max = log(3.0+float_epsilon)
+
+aclip = (lntend_min - mu_tend)/sigma_tend
+bclip = (lntend_max - mu_tend)/sigma_tend
+
+#Random element that may need to be replaced with the corresponding file
+for (iday in 1:ndays) {
+  lntend_clip <- rtruncnorm(n = nindex, a = aclip, b = bclip, mean = mu_tend, sd = sigma_tend)
+  tend[, iday] <- 3600.0 * exp(lntend_clip)
+}
+
+###############
+# TALK TIME FRACTION
+
+talkfraction = matrix(0, nrow = nindex, ncol = ndays)
+
+for (iday in 1:ndays) {
+  talkfraction[, iday] <- runif(nindex, min = 0.05, max = 0.25 + float_epsilon)
+}
+
+##############
+# CALCULATE AREA OF ROOM (m**2)
+roomarea = (1 + nsus)*areapp
+
+# CALCULATE VOLUME OF ROOM (m**3)
+
+roomvol = roomheight*roomarea
+
+###############
+# CALCULATE VOLUME FLOW RATE (m3/s)
+
+
