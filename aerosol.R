@@ -90,8 +90,8 @@ for (im in 1:nmodesb) {
 
 for (im in 1:nmodest){
   for (i in 1:ibinmax) {
-  nemt[i,im] = dlogd * log(10.0) * cnt[im]/((2.0*pi)^(0.5) * log(gsdt[im])) * exp(-((log(d[i]) - log(cmdt[im]))^2)/(2.0*(log(gsdt[im]))^2))
-vemt[i,im] = nemt[i,im] * (pi * (d[i])^3)/6.0
+    nemt[i,im] = dlogd * log(10.0) * cnt[im]/((2.0*pi)^(0.5) * log(gsdt[im])) * exp(-((log(d[i]) - log(cmdt[im]))^2)/(2.0*(log(gsdt[im]))^2))
+    vemt[i,im] = nemt[i,im] * (pi * (d[i])^3)/6.0
   }
 }
 
@@ -661,11 +661,111 @@ for (iday in 1:ndays) {
   # CALCULATE DOSE FOR WELL MIXED CASE (virions/m3)
 
   for (ibin in 1:ibinmax) {
+    # DOSE FOR SUSCEPTIBLE IN WELL-MIXED CASE
+    dose_1[, iday] <- dose_1[, iday] + (1 - maskfac_in) * fdep[ibin] * rnaconc_1[ibin, , iday] * vdotbreathe[, iday] * tend[, iday]
+    dose_2[, iday] <- dose_2[, iday] + (1 - maskfac_in) * fdep[ibin] * rnaconc_2[ibin, , iday] * vdotbreathe[, iday] * tend[, iday]
+    dose_3[, iday] <- dose_3[, iday] + (1 - maskfac_in) * fdep[ibin] * rnaconc_3[ibin, , iday] * vdotbreathe[, iday] * tend[, iday]
+    dose_4[, iday] <- dose_4[, iday] + (1 - maskfac_in) * fdep[ibin] * rnaconc_4[ibin, , iday] * vdotbreathe[, iday] * tend[, iday]
+    dosem_1[, iday] <- dosem_1[, iday] + (1 - maskfac_in) * fdep[ibin] * rnaconcm_1[ibin, , iday] * vdotbreathe[, iday] * tend[, iday]
+    dosem_2[, iday] <- dosem_2[, iday] + (1 - maskfac_in) * fdep[ibin] * rnaconcm_2[ibin, , iday] * vdotbreathe[, iday] * tend[, iday]
+    dosem_3[, iday] <- dosem_3[, iday] + (1 - maskfac_in) * fdep[ibin] * rnaconcm_3[ibin, , iday] * vdotbreathe[, iday] * tend[, iday]
+    dosem_4[, iday] <- dosem_4[, iday] + (1 - maskfac_in) * fdep[ibin] * rnaconcm_4[ibin, , iday] * vdotbreathe[, iday] * tend[, iday]
 
+    # DOSE FOR SUSCEPTIBLE WHO ARE ONLY IN FAR-FIELD IN NEAR+FAR CASE
+    xdose_far_1[, iday] <- xdose_far_1[, iday] + (1 - maskfac_in) * fdep[ibin] * xrnaconc_far_1[ibin, , iday] * vdotbreathe[, iday] * tend[, iday]
+    xdose_far_2[, iday] <- xdose_far_2[, iday] + (1 - maskfac_in) * fdep[ibin] * xrnaconc_far_2[ibin, , iday] * vdotbreathe[, iday] * tend[, iday]
+    xdose_far_3[, iday] <- xdose_far_3[, iday] + (1 - maskfac_in) * fdep[ibin] * xrnaconc_far_3[ibin, , iday] * vdotbreathe[, iday] * tend[, iday]
+    xdose_far_4[, iday] <- xdose_far_4[, iday] + (1 - maskfac_in) * fdep[ibin] * xrnaconc_far_4[ibin, , iday] * vdotbreathe[, iday] * tend[, iday]
+    xdosem_far_1[, iday] <- xdosem_far_1[, iday] + (1 - maskfac_in) * fdep[ibin] * xrnaconcm_far_1[ibin, , iday] * vdotbreathe[, iday] * tend[, iday]
+    xdosem_far_2[, iday] <- xdosem_far_2[, iday] + (1 - maskfac_in) * fdep[ibin] * xrnaconcm_far_2[ibin, , iday] * vdotbreathe[, iday] * tend[, iday]
+    xdosem_far_3[, iday] <- xdosem_far_3[, iday] + (1 - maskfac_in) * fdep[ibin] * xrnaconcm_far_3[ibin, , iday] * vdotbreathe[, iday] * tend[, iday]
+    xdosem_far_4[, iday] <- xdosem_far_4[, iday] + (1 - maskfac_in) * fdep[ibin] * xrnaconcm_far_4[ibin, , iday] * vdotbreathe[, iday] * tend[, iday]
+
+    # DOSE FOR SUSCEPTIBLE WHO ARE IN FAR FIELD AND NEAR FIELD IN NEAR+FAR CASE
+    xdose_nearfar_1[, iday] <- xdose_nearfar_1[, iday] + (1 - maskfac_in) * fdep[ibin] * vdotbreathe[, iday] * ((tend[, iday] - tnear[, iday]) * xrnaconc_far_1[ibin, , iday] + xrnaconc_near_1[ibin, , iday] * tnear[, iday])
+    xdose_nearfar_2[, iday] <- xdose_nearfar_2[, iday] + (1 - maskfac_in) * fdep[ibin] * vdotbreathe[, iday] * ((tend[, iday] - tnear[, iday]) * xrnaconc_far_2[ibin, , iday] + xrnaconc_near_2[ibin, , iday] * tnear[, iday])
+    xdose_nearfar_3[, iday] <- xdose_nearfar_3[, iday] + (1 - maskfac_in) * fdep[ibin] * vdotbreathe[, iday] * ((tend[, iday] - tnear[, iday]) * xrnaconc_far_3[ibin, , iday] + xrnaconc_near_3[ibin, , iday] * tnear[, iday])
+    xdose_nearfar_4[, iday] <- xdose_nearfar_4[, iday] + (1 - maskfac_in) * fdep[ibin] * vdotbreathe[, iday] * ((tend[, iday] - tnear[, iday]) * xrnaconc_far_4[ibin, , iday] + xrnaconc_near_4[ibin, , iday] * tnear[, iday])
+    xdosem_nearfar_1[, iday] <- xdosem_nearfar_1[, iday] + (1 - maskfac_in) * fdep[ibin] * vdotbreathe[, iday] * ((tend[, iday] - tnear[, iday]) * xrnaconcm_far_1[ibin, , iday] + xrnaconcm_near_1[ibin, , iday] * tnear[, iday])
+    xdosem_nearfar_2[, iday] <- xdosem_nearfar_2[, iday] + (1 - maskfac_in) * fdep[ibin] * vdotbreathe[, iday] * ((tend[, iday] - tnear[, iday]) * xrnaconcm_far_2[ibin, , iday] + xrnaconcm_near_2[ibin, , iday] * tnear[, iday])
+    xdosem_nearfar_3[, iday] <- xdosem_nearfar_3[, iday] + (1 - maskfac_in) * fdep[ibin] * vdotbreathe[, iday] * ((tend[, iday] - tnear[, iday]) * xrnaconcm_far_3[ibin, , iday] + xrnaconcm_near_3[ibin, , iday] * tnear[, iday])
+    xdosem_nearfar_4[, iday] <- xdosem_nearfar_4[, iday] + (1 - maskfac_in) * fdep[ibin] * vdotbreathe[, iday] * ((tend[, iday] - tnear[, iday]) * xrnaconcm_far_4[ibin, , iday] + xrnaconcm_near_4[ibin, , iday] * tnear[, iday])
+
+    # CALCULATE INFECTION PROBABILITY
   }
+  # NOTE: ID50 IS NOT REQUIRED IN CALCULATION OF *_4 INFECTION PROBABILITIES BECAUSE CORRESPONDING DOSES ARE ALREADY IN SCALED INFECTIOUS UNITS
+
+  # INFECTION PROBABILITY FOR SUSCEPTIBLE IN WELL MIXED CASE
+  pinf_1[, iday] <- 1.0 - exp(-dose_1[, iday] / id50)
+  pinf_2[, iday] <- 1.0 - exp(-dose_2[, iday] / id50)
+  pinf_3[, iday] <- 1.0 - exp(-dose_3[, iday] / id50)
+  pinf_4[, iday] <- 1.0 - exp(-dose_4[, iday] / id50)
+  pinfm_1[, iday] <- 1.0 - exp(-dosem_1[, iday] / id50)
+  pinfm_2[, iday] <- 1.0 - exp(-dosem_2[, iday] / id50)
+  pinfm_3[, iday] <- 1.0 - exp(-dosem_3[, iday] / id50)
+  pinfm_4[, iday] <- 1.0 - exp(-dosem_4[, iday] / id50)
+
+  # INFECTION PROBABILITY FOR SUSCEPTIBLE WHO ARE ONLY IN FAR FIELD IN THE NEAR+FAR CASE
+  xpinf_far_1[, iday] <- 1.0 - exp(-xdose_far_1[, iday] / id50)
+  xpinf_far_2[, iday] <- 1.0 - exp(-xdose_far_2[, iday] / id50)
+  xpinf_far_3[, iday] <- 1.0 - exp(-xdose_far_3[, iday] / id50)
+  xpinf_far_4[, iday] <- 1.0 - exp(-xdose_far_4[, iday] / id50)
+  xpinfm_far_1[, iday] <- 1.0 - exp(-xdosem_far_1[, iday] / id50)
+  xpinfm_far_2[, iday] <- 1.0 - exp(-xdosem_far_2[, iday] / id50)
+  xpinfm_far_3[, iday] <- 1.0 - exp(-xdosem_far_3[, iday] / id50)
+  xpinfm_far_4[, iday] <- 1.0 - exp(-xdosem_far_4[, iday] / id50)
+
+  # INFECTION PROBABILITY FOR SUSCEPTIBLE WHO ARE IN FAR FIELD AND NEAR FIELD IN THE NEAR+FAR CASE
+  xpinf_nearfar_1[, iday] <- 1.0 - exp(-xdose_nearfar_1[, iday] / id50)
+  xpinf_nearfar_2[, iday] <- 1.0 - exp(-xdose_nearfar_2[, iday] / id50)
+  xpinf_nearfar_3[, iday] <- 1.0 - exp(-xdose_nearfar_3[, iday] / id50)
+  xpinf_nearfar_4[, iday] <- 1.0 - exp(-xdose_nearfar_4[, iday] / id50)
+  xpinfm_nearfar_1[, iday] <- 1.0 - exp(-xdosem_nearfar_1[, iday] / id50)
+  xpinfm_nearfar_2[, iday] <- 1.0 - exp(-xdosem_nearfar_2[, iday] / id50)
+  xpinfm_nearfar_3[, iday] <- 1.0 - exp(-xdosem_nearfar_3[, iday] / id50)
+  xpinfm_nearfar_4[, iday] <- 1.0 - exp(-xdosem_nearfar_4[, iday] / id50)
+
+  # INFECTION PROBABILITY FOR NEAR+FAR CASE
+  xpinf_1[, iday] <- (1.0 - fnear[, iday]) * xpinf_far_1[, iday] + fnear[, iday] * xpinf_nearfar_1[, iday]
+  xpinf_2[, iday] <- (1.0 - fnear[, iday]) * xpinf_far_2[, iday] + fnear[, iday] * xpinf_nearfar_2[, iday]
+  xpinf_3[, iday] <- (1.0 - fnear[, iday]) * xpinf_far_3[, iday] + fnear[, iday] * xpinf_nearfar_3[, iday]
+  xpinf_4[, iday] <- (1.0 - fnear[, iday]) * xpinf_far_4[, iday] + fnear[, iday] * xpinf_nearfar_4[, iday]
+  xpinfm_1[, iday] <- (1.0 - fnear[, iday]) * xpinfm_far_1[, iday] + fnear[, iday] * xpinfm_nearfar_1[, iday]
+  xpinfm_2[, iday] <- (1.0 - fnear[, iday]) * xpinfm_far_2[, iday] + fnear[, iday] * xpinfm_nearfar_2[, iday]
+  xpinfm_3[, iday] <- (1.0 - fnear[, iday]) * xpinfm_far_3[, iday] + fnear[, iday] * xpinfm_nearfar_3[, iday]
+  xpinfm_4[, iday] <- (1.0 - fnear[, iday]) * xpinfm_far_4[, iday] + fnear[, iday] * xpinfm_nearfar_4[, iday]
+
+  # CALCULATE NUMBER OF SECONDARY INFECTIONS
+
+  # NUMBER OF SECONDARY INFECTIONS FOR WELL MIXED CASE
+  ninf_1[, iday] <- round(nsus[, iday] * pinf_1[, iday])
+  ninf_2[, iday] <- round(nsus[, iday] * pinf_2[, iday])
+  ninf_3[, iday] <- round(nsus[, iday] * pinf_3[, iday])
+  ninf_4[, iday] <- round(nsus[, iday] * pinf_4[, iday])
+  ninfm_1[, iday] <- round(nsus[, iday] * pinfm_1[, iday])
+  ninfm_2[, iday] <- round(nsus[, iday] * pinfm_2[, iday])
+  ninfm_3[, iday] <- round(nsus[, iday] * pinfm_3[, iday])
+  ninfm_4[, iday] <- round(nsus[, iday] * pinfm_4[, iday])
+
+  # NUMBER OF SECONDARY INFECTIONS FOR NEAR+FAR CASE
+  xninf_1[, iday] <- round(nsus[, iday] * xpinf_1[, iday])
+  xninf_2[, iday] <- round(nsus[, iday] * xpinf_2[, iday])
+  xninf_3[, iday] <- round(nsus[, iday] * xpinf_3[, iday])
+  xninf_4[, iday] <- round(nsus[, iday] * xpinf_4[, iday])
+  xninfm_1[, iday] <- round(nsus[, iday] * xpinfm_1[, iday])
+  xninfm_2[, iday] <- round(nsus[, iday] * xpinfm_2[, iday])
+  xninfm_3[, iday] <- round(nsus[, iday] * xpinfm_3[, iday])
+  xninfm_4[, iday] <- round(nsus[, iday] * xpinfm_4[, iday])
 }
 
-
-
-
+# CALCULATE R*
+cat('Number of new infections - WELL-MIXED; h=1.0 SALIVA: ', sum(ninf_1), '\n')
+cat('R*: ', sum(ninf_1) / nindex, '\n')
+cat('Number of new infections - WELL-MIXED; h=1.0 NOSE: ', sum(ninf_2), '\n')
+cat('R*: ', sum(ninf_2) / nindex, '\n')
+cat('Number of new infections - WELL-MIXED; h=0.5-0.75 SALIVA: ', sum(ninf_3), '\n')
+cat('R*: ', sum(ninf_3) / nindex, '\n')
+cat('Number of new infections - WELL-MIXED; h=0.5-0.75 NOSE: ', sum(ninf_4), '\n')
+cat('R*: ', sum(ninf_4) / nindex, '\n')
+cat('\n')
 
