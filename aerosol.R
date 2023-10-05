@@ -107,7 +107,8 @@ vemtalk = 64.0 * 1.0e-12 * (vemt[,1]+vemt[,2]+vemt[,3])
 # Scale by factor of 8 (ie add ln(8) to mu) to account for APS sampling
 mub = log(8) - 0.48*log(10)
 sigmab = 0.85*log(10)/(2^(0.5))
-nemm_breathe <- scan("data/data3.csv", sep=",")
+nemm_breathe <- rlnorm(mub,sigmab, n=nindex) #rng.lognormal(mub, sigmab, size=nindex)
+#rlnorm(mu_ach,sigma_ach, n=nindex)
 
 
 # Specify distribution of p/s for talking
@@ -121,11 +122,13 @@ std = 2.7*13
 mu = log(mean*mean/((mean*mean + std*std)^(0.5)))
 sigma = (log(1.0 + std*std/(mean*mean)))^0.5
 lmax = log(20.0*13)
-bclip = (lmax - mu)/sigma
+bclip <-  (lmax - mu)/sigma
 lclip <- scan("data/data2.csv", sep=",")
 nemm_talk = exp(lclip)
 
 #lclip = truncnorm.rvs(-np.inf, bclip, loc=mu, scale=sigma, size=nindex,random_state=rng)
+#rtruncnorm(n = nindex, a = aclip, b = bclip, mean = mu_tend, sd = sigma_tend)
+
 
 # Set p/s from breathing to no more than 10% from talking
 for (i in 1:nindex) {
@@ -135,7 +138,7 @@ for (i in 1:nindex) {
 }
 
 # Set p/s from breathing to a max of 24 p/s (limit of 3 from Fig 5A in Asadi et al. scaled by factor of 8)
-nemm_breathe = clamp(nemm_breathe, lower = -Inf, 24, useValue = TRUE)
+nemm_breathe = clamp(nemm_breathe, lower = -Inf, upper = 24, useValues = TRUE)
 sprintf('nemm_talk, %f, %f, %f, %f, %f', mean(nemm_talk), median(nemm_talk), std(nemm_talk), min(nemm_talk), max(nemm_talk))
 sprintf('nemm_breathe, %f, %f, %f, %f, %f', mean(nemm_breathe),median(nemm_breathe),std(nemm_breathe),min(nemm_breathe),max(nemm_breathe))
 #######################################
@@ -224,7 +227,6 @@ achm = matrix(0, nrow = nindex, ncol = ndays)
 # From Persily et al. (2005)
 meanach = 2.00
 stdach = 2.45
-
 mu_ach = log(meanach*meanach/(meanach*meanach + stdach*stdach)^0.5)
 sigma_ach = (log(1.0 + stdach*stdach/(meanach*meanach)))^0.5
 
