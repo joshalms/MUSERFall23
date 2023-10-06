@@ -207,7 +207,7 @@ vsalv = matrix(0, nrow = nindex, ncol = ndays)
 kevs = read.csv("data/Ke_Log10VLs_saliva_10000.csv", sep=",", skip = 1)
 for (iday in 1:ndays) {
   irow <- 10 * iday + 5
-  vnose[, iday] <- unlist((10^kevs[irow, 2:10001]))
+  vsalv[, iday] <- unlist((10^kevs[irow, 2:10001]))
 }
 
 
@@ -215,7 +215,7 @@ vinfectiousness = matrix(0, nrow = nindex, ncol = ndays)
 kevi = read.csv("data/Ke_Infectiousness_10000.csv", sep=",", skip = 1)
 for (iday in 1:ndays) {
   irow <- 10 * iday + 5
-  vnose[, iday] <- unlist((3*kevi[irow, 2:10001]))
+  vinfectiousness[, iday] <- unlist((3*kevi[irow, 2:10001]))
 }
 
 
@@ -421,7 +421,7 @@ xconst_4 = 1.3355e3
 xdil_4 = 24
 
 # Infection virions per mL of aerosol volume
-# Note vsalv is per ml of saliva, vnose is per mL of VMT, vinfectioiusness is per swab
+# Note vsalv is per ml of saliva, vnose is per mL of VMT, vinfectiousness is per swab
 vinf_1 = const_1 * (vsalv ** hpower_1)
 vinf_2 = const_2 * (vnose ** hpower_2)
 vinf_3 = matrix(0, nrow = nindex, ncol = ndays)
@@ -837,4 +837,105 @@ xnzeros_2 = ninfindex_2[xninfindex_2 == 0]
 xnzeros_3 = ninfindex_3[xninfindex_3 == 0]
 xnzeros_4 = ninfindex_3[xninfindex_4 == 0]
 
+ninfday_1 = colSums(ninf_1)
+ninfday_2 = colSums(ninf_2)
+ninfday_3 = colSums(ninf_3)
+ninfday_4 = colSums(ninf_4)
+xninfday_1 = colSums(xninf_1)
+xninfday_2 = colSums(xninf_2)
+xninfday_3 = colSums(xninf_3)
+xninfday_4 = colSums(xninf_4)
+
+ezeros_1 = as.vector(ninf_1)[as.vector(ninf_1) == 0]
+ezeros_2 = as.vector(ninf_2)[as.vector(ninf_2) == 0]
+ezeros_3 = as.vector(ninf_3)[as.vector(ninf_3) == 0]
+ezeros_4 = as.vector(ninf_4)[as.vector(ninf_4) == 0]
+xezeros_1 = as.vector(xninf_1)[as.vector(xninf_1) == 0]
+xezeros_2 = as.vector(xninf_2)[as.vector(xninf_2) == 0]
+xezeros_3 = as.vector(xninf_3)[as.vector(xninf_3) == 0]
+xezeros_4 = as.vector(xninf_4)[as.vector(xninf_4) == 0]
+
+cat("Max infections/index case WELL-MIXED; h=1.0 SALIVA: ", max(ninfindex_1), "\n")
+cat("Max infections/index case WELL-MIXED; h=1.0 NOSE: ", max(ninfindex_2), "\n")
+cat("Max infections/index case WELL-MIXED; h=0.5-0.75 SALIVA: ", max(ninfindex_3), "\n")
+cat("Max infections/index case WELL-MIXED; h=0.5-0.75 NOSE: ", max(ninfindex_4), "\n\n")
+
+cat(paste("Max infections/index case NF", xdil_1, "; h=1.0 SALIVA: ", max(xninfindex_1), "\n", sep = ""))
+cat(paste("Max infections/index case NF", xdil_2, "; h=1.0 NOSE: ", max(xninfindex_2), "\n", sep = ""))
+cat(paste("Max infections/index case NF", xdil_3, "; h=0.5-0.75 SALIVA: ", max(xninfindex_3), "\n", sep = ""))
+cat(paste("Max infections/index case NF", xdil_4, "; h=0.5-0.75 NOSE: ", max(xninfindex_4), "\n", sep = ""))
+cat("\n")
+
+cat("Max infections/event WELL-MIXED; h=1.0 SALIVA: ", max(ninf_1), "\n")
+cat("Max infections/event WELL-MIXED; h=1.0 NOSE: ", max(ninf_2), "\n")
+cat("Max infections/event WELL-MIXED; h=0.5-0.75 SALIVA: ", max(ninf_3), "\n")
+cat("Max infections/event WELL-MIXED; h=0.5-0.75 NOSE: ", max(ninf_4), "\n")
+cat("\n")
+
+cat('Max infections/event NF', xdil_1, '; h=1.0 SALIVA: ', max(xninf_1), '\n')
+cat('Max infections/event NF', xdil_2, '; h=1.0 NOSE: ', max(xninf_2), '\n')
+cat('Max infections/event NF', xdil_3, '; h=0.5-0.75 SALIVA: ', max(xninf_3), '\n')
+cat('Max infections/event NF', xdil_4, '; h=0.5-0.75 NOSE: ', max(xninf_4), '\n')
+cat('\n')
+
+cat('Number of index cases with 0 infections WELL-MIXED; h=1.0 SALIVA: ', length(nzeros_1), '\n')
+cat('Number of index cases with 0 infections WELL-MIXED; h=1.0 NOSE: ', length(nzeros_2), '\n')
+cat('Number of index cases with 0 infections WELL-MIXED; h=0.5-0.75 SALIVA: ', length(nzeros_3), '\n')
+cat('Number of index cases with 0 infections WELL-MIXED; h=0.5-0.75 NOSE: ', length(nzeros_4), '\n')
+cat('\n')
+
+cat('Number of index cases with 0 infections NF', xdil_1, '; h=1.0 SALIVA: ', length(xnzeros_1), '\n')
+cat('Number of index cases with 0 infections NF', xdil_2, '; h=1.0 NOSE: ', length(xnzeros_2), '\n')
+cat('Number of index cases with 0 infections NF', xdil_3, '; h=0.5-0.75 SALIVA: ', length(xnzeros_3), '\n')
+cat('Number of index cases with 0 infections NF', xdil_4, '; h=0.5-0.75 NOSE: ', length(xnzeros_4), '\n')
+cat('\n')
+
+dzeros_1 = rep(0, ndays)
+dzeros_2 = rep(0, ndays)
+dzeros_3 = rep(0, ndays)
+dzeros_4 = rep(0, ndays)
+xdzeros_1 = rep(0, ndays)
+xdzeros_2 = rep(0, ndays)
+xdzeros_3 = rep(0, ndays)
+xdzeros_4 = rep(0, ndays)
+cat('Number of events with 0 infections WELL-MIXED; h=1.0 SALIVA: ', length(ezeros_1), '\n')
+for (iday in 1:ndays) {
+  dzeros_1[iday] <- sum(ninf_1[, iday] == 0)
+  cat(iday, ninfday_1[iday], dzeros_1[iday], '\n')
+}
+cat('Number of events with 0 infections WELL-MIXED; h=1.0 NOSE: ', length(ezeros_2), '\n')
+
+for (iday in 1:ndays) {
+  dzeros_2[iday] <- sum(ninf_2[, iday] == 0)
+  cat(iday, ninfday_2[iday], dzeros_2[iday], '\n')
+}
+cat('Number of events with 0 infections WELL-MIXED; h=0.5-0.75 SALIVA: ', length(ezeros_3), '\n')
+
+for (iday in 1:ndays) {
+  dzeros_3[iday] <- sum(ninf_3[, iday] == 0)
+  cat(iday, ninfday_3[iday], dzeros_3[iday], '\n')
+}
+cat('Number of events with 0 infections WELL-MIXED; h=0.5-0.75 NOSE: ', length(ezeros_4), '\n')
+
+cat('Number of events with 0 infections NF', xdil_1, '; h=1.0 SALIVA: ', length(xezeros_1), '\n')
+for (iday in 1:ndays) {
+  xdzeros_1[iday] <- sum(xninf_1[, iday] == 0)
+  cat(iday, xninfday_1[iday], xdzeros_1[iday], '\n')
+}
+cat('Number of events with 0 infections NF', xdil_2, '; h=1.0 NOSE: ', length(xezeros_2), '\n')
+for (iday in 1:ndays) {
+  xdzeros_2[iday] <- sum(xninf_2[, iday] == 0)
+  cat(iday, xninfday_2[iday], xdzeros_2[iday], '\n')
+}
+cat('Number of events with 0 infections NF', xdil_3, '; h=0.5-0.75 SALIVA: ', length(xezeros_3), '\n')
+for (iday in 1:ndays) {
+  xdzeros_3[iday] <- sum(xninf_3[, iday] == 0)
+  cat(iday, xninfday_3[iday], xdzeros_3[iday], '\n')
+}
+cat('Number of events with 0 infections NF', xdil_4, '; h=0.5-0.75 NOSE: ', length(xezeros_4), '\n')
+for (iday in 1:ndays) {
+  xdzeros_4[iday] <- sum(xninf_4[, iday] == 0)
+  cat(iday, xninfday_4[iday], xdzeros_4[iday], '\n')
+}
+cat('\n')
 
