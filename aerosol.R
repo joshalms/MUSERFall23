@@ -604,7 +604,7 @@ for (iday in 1:ndays) {
 
 for (iday in 1:ndays) {
   for (kind in 1:nindex) {
-    if (nsus[kind, iday] > 0) {
+    if (nsus_near[kind, iday] > 0) {
       tnear[kind, iday] <- tend[kind, iday] / nsus_near[kind, iday]
     }
   }
