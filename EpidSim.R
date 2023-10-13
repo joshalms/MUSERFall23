@@ -180,18 +180,100 @@ progress <- function(dat, at) {   # also with an E compartment
 }
 
 
-## Parameters, initial conditions, and control settings
-param <- param.net(inf.prob = 0.5, act.rate = 2, ei.rate = 0.01, ir.rate = 0.01, rs.rate = 0.01) #note that rs.rate was missing argument
+
+xpinf_1 <- read.csv("MUSERFall23/xpinf_1.csv")
+
+
+# Create a `list.of.updaters`
+list.of.updaters <- list(
+  # this is one updater
+  list(
+    at = 1,
+    param = list(
+      inf.prob = sample(xpinf_1[, 1])
+    )
+  ),
+  # this is another updater
+  list(
+    at = 2,
+    param = list(
+      inf.prob = sample(xpinf_1[, 2])
+    )
+  ),
+  list(
+    at = 3,
+    param = list(
+      inf.prob = sample(xpinf_1[, 3])
+    )
+  ),
+  list(
+    at = 4,
+    param = list(
+      inf.prob = sample(xpinf_1[, 4])
+    )
+  ),
+  list(
+    at = 5,
+    param = list(
+      inf.prob = sample(xpinf_1[, 5])
+    )
+  ),
+  list(
+    at = 6,
+    param = list(
+      inf.prob = sample(xpinf_1[, 6])
+    )
+  ),
+  list(
+    at = 7,
+    param = list(
+      inf.prob = sample(xpinf_1[, 7])
+    )
+  ),
+  list(
+    at = 8,
+    param = list(
+      inf.prob = sample(xpinf_1[, 8])
+    )
+  ),
+  list(
+    at = 9,
+    param = list(
+      inf.prob = sample(xpinf_1[, 9])
+    )
+  ),
+  list(
+    at = 10,
+    param = list(
+      inf.prob = sample(xpinf_1[, 10])
+    )
+  ),
+  list(
+    at = 11,
+    param = list(
+      inf.prob = sample(xpinf_1[, 11])
+    )
+  ),
+  list(
+    at = 12,
+    param = list(
+      inf.prob = sample(xpinf_1[, 12])
+    )
+  )
+)
+
+
+param <- param.net(inf.prob = 0.5, act.rate = 2, ei.rate = 0.01, ir.rate = 0.01, rs.rate = 0.01, .param.updater.list = list.of.updaters) #note that rs.rate was missing argument
 init <- init.net(i.num = 10, status.rand = FALSE)
 
 # Ignore the type = "SI" setting; this is a bug that will be fixed
-control <- control.net(type = NULL, nsteps = 1000, nsims = 10,
+control <- control.net(type = NULL, nsteps = 12, nsims = 10,
                        infection.FUN = infect, progress.FUN = progress,
                        recovery.FUN = NULL, skip.check = TRUE,
                        resimulate.network = FALSE, verbose.int = 0)
 
 ## Network model
-nw <- network.initialize(500, directed = FALSE)  ## this is a 500-person network with no preferential attachment
+nw <- network.initialize(100000, directed = FALSE)  ## this is a 500-person network with no preferential attachment
 # set age-mixing:  https://rpubs.com/smjenness/111058
 #nw <- network.initialize(500, directed = FALSE, )  ## this uses the network specified above
 age <- sample(1:99, 1000, TRUE)
@@ -217,8 +299,8 @@ colMeans(sim.agecat)
 # plot below shows clustering by age
 el <- as.edgelist(simulate(fit.agecat))
 age.el <- matrix(age[el], ncol = 2)
-plot(jitter(age.el[, 1]), jitter(age.el[, 2]))
-abline(a = 0, b = 1)
+#plot(jitter(age.el[, 1]), jitter(age.el[, 2]))
+#abline(a = 0, b = 1)
 
 # estimate network parameters
 est <- netest(nw, formation = ~edges, target.stats = 150,
