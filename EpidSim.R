@@ -263,14 +263,17 @@ list.of.updaters <- list(
 )
 
 
-param <- param.net(inf.prob = 0.5, act.rate = 2, ei.rate = 0.01, ir.rate = 0.01, rs.rate = 0.01, .param.updater.list = list.of.updaters) #note that rs.rate was missing argument
+param <- param.net(inf.prob = 0.5, act.rate = 2, ei.rate = 0.01, ir.rate = 0.01,
+                   rs.rate = 0.01, .param.updater.list = list.of.updaters)
+
 init <- init.net(i.num = 10, status.rand = FALSE)
 
 # Ignore the type = "SI" setting; this is a bug that will be fixed
 control <- control.net(type = NULL, nsteps = 12, nsims = 10,
                        infection.FUN = infect, progress.FUN = progress,
                        recovery.FUN = NULL, skip.check = TRUE,
-                       resimulate.network = FALSE, verbose.int = 0)
+                       resimulate.network = FALSE, verbose.int = 0,
+                       verbose = TRUE)
 
 ## Network model
 nw <- network.initialize(100000, directed = FALSE)  ## this is a 500-person network with no preferential attachment
@@ -299,8 +302,8 @@ colMeans(sim.agecat)
 # plot below shows clustering by age
 el <- as.edgelist(simulate(fit.agecat))
 age.el <- matrix(age[el], ncol = 2)
-#plot(jitter(age.el[, 1]), jitter(age.el[, 2]))
-#abline(a = 0, b = 1)
+plot(jitter(age.el[, 1]), jitter(age.el[, 2]))
+abline(a = 0, b = 1)
 
 # estimate network parameters
 est <- netest(nw, formation = ~edges, target.stats = 150,
@@ -316,6 +319,9 @@ sim <- netsim(est, param, init, control)
 par(mar = c(3,3,1,1), mgp = c(2,1,0))
 #plot(sim, y = c("s.num", "i.num", "e.num", "r.num"), popfrac = FALSE,
 #     mean.col = 1:4, qnts = 1, qnts.col = 1:4, leg = TRUE)
+
+# ^^ This plot gave errors ^^
+
 plot(sim)
 plot(sim, y = c("se.flow", "ei.flow", "ir.flow","rs.flow"), legend = TRUE)
 
