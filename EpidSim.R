@@ -24,6 +24,11 @@ set.seed(27708)
 
 # modified to add an E for SEIR -- eventually should be SEIRS depending on sim length
 ### Transmission module / adding an E compartment
+
+
+
+
+
 infect <- function(dat, at) {
 
   ## Uncomment this to run environment interactively
@@ -181,83 +186,84 @@ progress <- function(dat, at) {   # also with an E compartment
 
 
 
-xpinf_1 <- read.csv("MUSERFall23/xpinf_1.csv")
+xpinf_1 <- read.csv("data/xpinf_1.csv")
 
 
 # Create a `list.of.updaters`
+#Will replace this with a function that builds the list (with num tsteps as var)
 list.of.updaters <- list(
   # this is one updater
   list(
     at = 1,
     param = list(
-      inf.prob = sample(xpinf_1[, 1])
+      inf.prob = sample(xpinf_1[, 1], size = 1)
     )
   ),
   # this is another updater
   list(
     at = 2,
     param = list(
-      inf.prob = sample(xpinf_1[, 2])
+      inf.prob = sample(xpinf_1[, 2], size = 1)
     )
   ),
   list(
     at = 3,
     param = list(
-      inf.prob = sample(xpinf_1[, 3])
+      inf.prob = sample(xpinf_1[, 3], size = 1)
     )
   ),
   list(
     at = 4,
     param = list(
-      inf.prob = sample(xpinf_1[, 4])
+      inf.prob = sample(xpinf_1[, 4], size = 1)
     )
   ),
   list(
     at = 5,
     param = list(
-      inf.prob = sample(xpinf_1[, 5])
+      inf.prob = sample(xpinf_1[, 5], size = 1)
     )
   ),
   list(
     at = 6,
     param = list(
-      inf.prob = sample(xpinf_1[, 6])
+      inf.prob = sample(xpinf_1[, 6], size = 1)
     )
   ),
   list(
     at = 7,
     param = list(
-      inf.prob = sample(xpinf_1[, 7])
+      inf.prob = sample(xpinf_1[, 7], size = 1)
     )
   ),
   list(
     at = 8,
     param = list(
-      inf.prob = sample(xpinf_1[, 8])
+      inf.prob = sample(xpinf_1[, 8], size = 1)
     )
   ),
   list(
     at = 9,
     param = list(
-      inf.prob = sample(xpinf_1[, 9])
+      inf.prob = sample(xpinf_1[, 9], size = 1)
     )
   ),
   list(
     at = 10,
     param = list(
-      inf.prob = sample(xpinf_1[, 10])
+      inf.prob = sample(xpinf_1[, 10], size = 1)
     )
   ),
   list(
     at = 11,
     param = list(
-      inf.prob = sample(xpinf_1[, 11])
+      inf.prob = sample(xpinf_1[, 11], size = 1)
     )
   ),
   list(
     at = 12,
     param = list(
-      inf.prob = sample(xpinf_1[, 12])
+      inf.prob = sample(xpinf_1[, 12], size = 1)
     )
   )
 )
@@ -269,14 +275,23 @@ param <- param.net(inf.prob = 0.5, act.rate = 2, ei.rate = 0.01, ir.rate = 0.01,
 init <- init.net(i.num = 10, status.rand = FALSE)
 
 # Ignore the type = "SI" setting; this is a bug that will be fixed
-control <- control.net(type = NULL, nsteps = 12, nsims = 10,
+control <- control.net(type = NULL, nsteps = 12, nsims = 1,
                        infection.FUN = infect, progress.FUN = progress,
                        recovery.FUN = NULL, skip.check = TRUE,
                        resimulate.network = FALSE, verbose.int = 0,
-                       verbose = TRUE)
+                       verbose = TRUE,
+                       save.transmat = TRUE, save.other = c("attr"),
+                       summary_nets.FUN = summary_nets)
+
+##WE WANT TO WRITE NEW infection.fun
+#The nodal attributes will eventually be utilized to weight the distribution into rooms
+#But as of now, we are just going to focus on getting into rooms and applying
+#aerosol
+
+
 
 ## Network model
-nw <- network.initialize(100000, directed = FALSE)  ## this is a 500-person network with no preferential attachment
+nw <- network.initialize(100, directed = FALSE)  ## this is a 500-person network with no preferential attachment
 # set age-mixing:  https://rpubs.com/smjenness/111058
 #nw <- network.initialize(500, directed = FALSE, )  ## this uses the network specified above
 age <- sample(1:99, 1000, TRUE)
@@ -311,6 +326,9 @@ est <- netest(nw, formation = ~edges, target.stats = 150,
 est <- netest(nw, formation = ~edges + nodematch("agecat", diff = TRUE),
               target.stats = c(edges, nodematch.targets),
               coef.diss = dissolution_coefs(~offset(edges), 10))  # this is the network with age-mixing
+est <- netest(nw, formation1, target.stats1, coef.diss,
+              coef.form = -Inf, set.control.ergm = control.ergm(MCMLE.maxit = 500))
+
 
 ## Simulate
 sim <- netsim(est, param, init, control)
