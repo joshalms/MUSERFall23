@@ -30,7 +30,17 @@ infect <- function(dat, at) {
   ## Initialize default incidence at 0 ##
   nInf <- 0
 
+# FOR:
+    #Assign each person to k rooms (we define k)
 
+    #Call the aerosol model on each of these rooms
+      #Add a vertex attribute for viral load
+    #Modify the aerosol script to be a function
+
+      #Run as usual but take a list of people with viral loads and output
+      #One probability - sample
+      #Sample from a binomial distribution approximated w/ mean of that probability
+      #Randomly infect that number of people in the room
 
 
   ## If any infected nodes, proceed with transmission ##
