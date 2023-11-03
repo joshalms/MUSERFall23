@@ -15,18 +15,23 @@
 
 infect <- function(dat, at) {
 
+  source("getRoomProb.R")
+  source("makeRooms.R")
+
 
   ## Attributes ##
   active <- get_attr(dat, "active")
   status <- get_attr(dat, "status")
-  infTime <- get_attr(dat, "infTime")
+
+  infTime <- get_attr(dat, "infTime") # Use infTime to find viral load in aerosol
+
+  nodes <- cbind(active, status, infTime)
 
   ## Find infected nodes ##
-  idsInf <- which(active == 1 & status == "i")
+
   idsAgents <- which(active == 1) #Get ids for all agents
   nActive <- sum(active == 1)
-  nElig <- length(idsInf)
-
+a
   ## Initialize default incidence at 0 ##
   nInf <- 0
 
@@ -35,6 +40,7 @@ infect <- function(dat, at) {
 
     #Call the aerosol model on each of these rooms
       #Add a vertex attribute for viral load
+
     #Modify the aerosol script to be a function
 
       #Run as usual but take a list of people with viral loads and output
@@ -44,7 +50,6 @@ infect <- function(dat, at) {
 
 
   ## If any infected nodes, proceed with transmission ##
-  if (nElig > 0 && nElig < nActive) {
 
     #Assign agents to rooms
     #Call aerosol model on each room and get random variable number of
@@ -60,6 +65,38 @@ infect <- function(dat, at) {
       #Randomly assign transitions
 
     #Update status & params
+
+    Rooms <- assignRooms(idsAgents)
+
+    for (room in Rooms) {
+
+      # ** Load kevn, kevs, kevi
+
+      infProb <- getRoomProb() #Need to restructure aerosol to give inf prob here
+
+      transmissions <- rbinom(length(room), 1, infProb)
+      idsNewInf <- which(transmissions == 1)
+      nInf <- length(idsNewInf)
+
+
+      if (nInf > 0) {
+
+        toInfect <- c()
+
+        for (person in room) {
+            toInfect <- c(toInfect, person)
+        }
+
+               status[toInfect] <- "e"
+               infTime[idsNewInf] <- at
+               dat <- set_attr(dat, "status", status)
+               dat <- set_attr(dat, "infTime", infTime)
+             }
+
+    }
+
+
+
 
     ## Look up discordant edgelist ##
   #   del <- discord_edgelist(dat, at)
@@ -113,8 +150,12 @@ infect <- function(dat, at) {
   # ## Save summary statistic for R->S flow
   # dat <- set_epi(dat, "rs.flow", at, nInf)
 
+
+
+
   return(dat)
-}
+
+
 
 
 
