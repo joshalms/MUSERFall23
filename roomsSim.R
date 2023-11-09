@@ -31,7 +31,7 @@ infect <- function(dat, at) {
 
   idsAgents <- which(active == 1) #Get ids for all agents
   nActive <- sum(active == 1)
-a
+
   ## Initialize default incidence at 0 ##
   nInf <- 0
 
@@ -73,9 +73,9 @@ a
       # ** Load kevn, kevs, kevi
 
       infProb <- getRoomProb() #Need to restructure aerosol to give inf prob here
-
-      transmissions <- rbinom(length(room), 1, infProb)
-      idsNewInf <- which(transmissions == 1)
+      sus <- room[which(status == "s")]
+      transmissions <- rbinom(length(sus), 1, infProb)
+      idsNewInf <- sus[which(transmissions == 1)]
       nInf <- length(idsNewInf)
 
 
@@ -83,12 +83,12 @@ a
 
         toInfect <- c()
 
-        for (person in room) {
+        for (person in idsNewInf) {
             toInfect <- c(toInfect, person)
         }
 
                status[toInfect] <- "e"
-               infTime[idsNewInf] <- at
+               infTime[toInfect] <- at
                dat <- set_attr(dat, "status", status)
                dat <- set_attr(dat, "infTime", infTime)
              }
@@ -145,10 +145,10 @@ a
   # }
   #
   # ## Save summary statistic for S->E flow
-  # dat <- set_epi(dat, "se.flow", at, nInf)
+   dat <- set_epi(dat, "se.flow", at, nInf)
   #
   # ## Save summary statistic for R->S flow
-  # dat <- set_epi(dat, "rs.flow", at, nInf)
+   dat <- set_epi(dat, "rs.flow", at, nInf)
 
 
 

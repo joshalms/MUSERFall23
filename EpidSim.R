@@ -202,10 +202,10 @@ xpinf_1 <- read.csv("data/xpinf_1.csv")
 param <- param.net(inf.prob = 0.5, act.rate = 2, ei.rate = 0.01, ir.rate = 0.01,
                    rs.rate = 0.01)
 
-init <- init.net(i.num = 5, status.rand = FALSE)
+init <- init.net(i.num = 10, status.rand = FALSE)
 
 # Ignore the type = "SI" setting; this is a bug that will be fixed
-control <- control.net(type = NULL, nsteps = 12, nsims = 1,
+control <- control.net(type = NULL, nsteps = 2, nsims = 1,
                        infection.FUN = infect,
                        recovery.FUN = NULL, skip.check = TRUE,
                        resimulate.network = FALSE, verbose.int = 0,
