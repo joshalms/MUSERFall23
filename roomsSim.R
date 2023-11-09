@@ -15,21 +15,25 @@
 
 infect <- function(dat, at) {
 
-  source("getRoomProb.R")
-  source("makeRooms.R")
+  source("getRoomProb.R") #Load in the function in this file
+  #Right now, it is just a static inf.prob. Want to replace with output of
+  #aerosol model
+  source("makeRooms.R") #Load function. Splits all ids into 10 rooms (10 is arbitrary constant that we can change)s
+
 
 
   ## Attributes ##
-  active <- get_attr(dat, "active")
-  status <- get_attr(dat, "status")
+  active <- get_attr(dat, "active") #list of all people who are doing something at this time step
+  #Idea is that some ppl won't interact with anyone
+  status <- get_attr(dat, "status") #Lit of all statuses with indices corresponding to ids
 
   infTime <- get_attr(dat, "infTime") # Use infTime to find viral load in aerosol
 
-  nodes <- cbind(active, status, infTime)
+  nodes <- cbind(active, status, infTime) #Just puts these attribute columns together
 
   ## Find infected nodes ##
 
-  idsAgents <- which(active == 1) #Get ids for all agents
+  idsAgents <- which(active == 1) #Get ids for all agents who are doing something
   nActive <- sum(active == 1)
 
   ## Initialize default incidence at 0 ##
@@ -66,31 +70,31 @@ infect <- function(dat, at) {
 
     #Update status & params
 
-    Rooms <- assignRooms(idsAgents)
+    Rooms <- assignRooms(idsAgents) #Split people into 10 rooms
 
-    for (room in Rooms) {
+    for (room in Rooms) { #Iterate through the rooms
 
       # ** Load kevn, kevs, kevi
 
       infProb <- getRoomProb() #Need to restructure aerosol to give inf prob here
-      sus <- room[which(status == "s")]
-      transmissions <- rbinom(length(sus), 1, infProb)
-      idsNewInf <- sus[which(transmissions == 1)]
-      nInf <- length(idsNewInf)
+      sus <- room[which(status == "s")] #Create a vector that holds all person ids for the susceptible in the room
+      transmissions <- rbinom(length(sus), 1, infProb) #Sample from binomial distribution for number of infections
+      idsNewInf <- sus[which(transmissions == 1)] #New vector that is a subset of sus -> contains only ids for infected
+      nInf <- length(idsNewInf) #Number of infected for the room
 
 
-      if (nInf > 0) {
+      if (nInf > 0) { #If anyone was infected
 
         toInfect <- c()
 
         for (person in idsNewInf) {
-            toInfect <- c(toInfect, person)
+            toInfect <- c(toInfect, person) #Makes a new vector of the ids we want
         }
 
-               status[toInfect] <- "e"
-               infTime[toInfect] <- at
+               status[toInfect] <- "e" #Update to exposed
+               infTime[toInfect] <- at #Set infection time to current time
                dat <- set_attr(dat, "status", status)
-               dat <- set_attr(dat, "infTime", infTime)
+               dat <- set_attr(dat, "infTime", infTime) #Update model state
              }
 
     }
