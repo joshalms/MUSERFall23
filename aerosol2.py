@@ -209,7 +209,7 @@ for iday in range(ndays):
 
 # Viral load NP (copies)
 vnose = np.zeros((nindex,ndays))
-kevn = np.loadtxt('Ke_Log10VLs_10000.csv', delimiter = ',', skiprows = 1)
+kevn = np.loadtxt('data/Ke_Log10VLs_10000.csv', delimiter = ',', skiprows = 1)
 # Multiply vnose by 3 to account for 3ml of VMT 
 for iday in range(ndays):
     irow = 10*iday+5
@@ -217,14 +217,14 @@ for iday in range(ndays):
 
 # Viral load saliva (copies/mL saliva)
 vsalv = np.zeros((nindex,ndays))
-kevs = np.loadtxt('Ke_Log10VLs_saliva_10000.csv', delimiter = ',', skiprows = 1)
+kevs = np.loadtxt('data/Ke_Log10VLs_saliva_10000.csv', delimiter = ',', skiprows = 1)
 for iday in range(ndays):
     irow = 10*iday+5
     vsalv[:,iday] = (10**kevs[irow,1:10001])
 
 # Infectiousness (arbitrary units)
 vinfectiousness = np.zeros((nindex,ndays))
-kevi = np.loadtxt('Ke_Infectiousness_10000.csv', delimiter = ',', skiprows = 1)
+kevi = np.loadtxt('data/Ke_Infectiousness_10000.csv', delimiter = ',', skiprows = 1)
 # Multiply vnose by 3 to account for 3ml of VMT 
 for iday in range(ndays):
     irow = 10*iday+5
