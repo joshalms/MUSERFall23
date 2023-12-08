@@ -402,6 +402,9 @@ Hrtrue = np.zeros((nindex,ndays))
 vbreathetrue = np.zeros((nindex,ndays))
 vtalktrue = np.zeros((nindex,ndays))
 
+#NOTE Everything before this line can be computer ahead of time in our model
+# Everything after this line is calculated for each room
+
 
 ################################################################################################
 def room_pinf(ibinmax,kdecay,lowbreathe,maskfac_out,maskfac_in,
@@ -409,7 +412,7 @@ def room_pinf(ibinmax,kdecay,lowbreathe,maskfac_out,maskfac_in,
               vemtalk,vembreathe,kdep,fdep,
               nindex_room,nemmx_talk,nemmx_breathe,vinfx):
 
-    # THIS ROUTINE CALCULATE THE PROBABILITY OF INFECTION IN A ROOM ASSUMING WELL-MIED CONDITIONS AND FAR FIELD TRANSMISSION ONLY
+    # THIS ROUTINE CALCULATE THE PROBABILITY OF INFECTION IN A ROOM ASSUMING WELL-MIXED CONDITIONS AND FAR FIELD TRANSMISSION ONLY
 
     # NOTE
     # ibinmax,kdecay,lowbreathe,maskfac_out,maskfac_in are scalars that do not change from room to room
@@ -445,6 +448,10 @@ def room_pinf(ibinmax,kdecay,lowbreathe,maskfac_out,maskfac_in,
     return pinfx
 ################################################################################################
 
+
+#NOTE Do not need anything after this line for our model
+#Replace with network model
+
 nrooms = nindex
 for i_day in range(ndays):
     for i_room in range(nrooms):
@@ -458,9 +465,10 @@ for i_day in range(ndays):
         nemmx_breathe=np.zeros(nindex_room)
         vinfx=np.zeros(nindex_room)
         for i_index in range(nindex_room):
-            nemmx_talk[i_index] = nemm_talk[i_room]
-            nemmx_breathe[i_index] = nemm_breathe[i_room]
-            vinfx[i_index] = vinf_1[i_room,i_day]
+            #assign a tag corresponding to the individual's index
+            nemmx_talk[i_index] = nemm_talk[i_room] #Instead of i_room, it will be i_tag 
+            nemmx_breathe[i_index] = nemm_breathe[i_room] #Same thing, use tag
+            vinfx[i_index] = vinf_1[i_room,i_day] #replace iroom with tag
  
         pinf_1[i_room,i_day] = room_pinf(ibinmax,kdecay,lowbreathe,maskfac_out,maskfac_in,
               roomvolx,achx,tendx,talkfractionx,vdotbreathex,
@@ -468,6 +476,8 @@ for i_day in range(ndays):
               nindex_room,nemmx_talk,nemmx_breathe,vinfx)
 
         ninf_1[i_room,i_day] = np.rint(pinf_1[i_room,i_day] * nsus[i_room,i_day])
+
+
 
 # CALCULATE R*
 print('Number of new infections - WELL-MIXED; h=1.0 SALIVA: ', np.sum(ninf_1))
@@ -497,3 +507,4 @@ for iday in range(ndays):
     dzeros_1[iday] = ninf_1[:,iday][ninf_1[:,iday] == 0].size 
     print(iday,ninfday_1[iday],dzeros_1[iday])
 print('')
+
