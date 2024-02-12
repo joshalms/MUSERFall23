@@ -1,0 +1,7 @@
+T 144
+sdother 0.3
+t_lock 38
+t_lift 99
+t_shift 0
+close_only_customer 0
+closure_percentage 1
