@@ -95,6 +95,9 @@ for layer, G_layer in G_layers.items():
     plt.show()
 
 
+##############
+
+
 # import EoN
 # import networkx as nx
 # from collections import defaultdict
@@ -123,9 +126,9 @@ for layer, G_layer in G_layers.items():
 # # Spontaneous: A node of status A becomes B without any neighbor's influence
 # # Not sure if we need something like this, since incubation/AKA E-->I is already defined in induced
 # H = nx.DiGraph() 
-# H.add_edge('E', 'I', rate = 0.6, weight_label='expose2infect_weight')
+# H.add_edge('E', 'I', rate = 0.0, weight_label='expose2infect_weight')
 # H.add_node('S') # This line is actually unnecessary
-# H.add_edge('I', 'R', rate = 0.1)
+# H.add_edge('I', 'R', rate = 0.0)
 
 # # Induced: An edge between status A and status B nodes suddenly becomes an edge between a status A and a status C node
 # # because the status B node changes status due to the existence of the edge
