@@ -21,7 +21,7 @@ end_day = 30
 # Parse the data
 def parse_data(data):
     parsed_data = []
-    for line in data[:100]: # Currently only going through first 100 lines
+    for line in data[:1000]: # Currently only going through first 1000 lines
         parsed_data.append((int(line[0]), int(line[1]), float(line[2])))
     return parsed_data
 
@@ -47,14 +47,12 @@ def graph(rooms):
 
     pos = nx.spring_layout(G)  # positions for all nodes
 
-    # nodes
-    nx.draw_networkx_nodes(G, pos, node_size=70)
-
-    # edges
+    # Nodes
+    nx.draw_networkx_nodes(G, pos, node_size=50)
+    # Edges
     nx.draw_networkx_edges(G, pos, width=5)
-
-    # labels
-    nx.draw_networkx_labels(G, pos, font_size=8, font_family="sans-serif")
+    # Labels
+    nx.draw_networkx_labels(G, pos, font_size=5)
 
     plt.axis("off")
     plt.show()
